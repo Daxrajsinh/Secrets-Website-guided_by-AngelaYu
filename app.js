@@ -3,7 +3,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-const encrypt = require("mongoose-encryption");
+// const encrypt = require("mongoose-encryption");
+const md5 = require("md5");
 
 const app = express();
 
@@ -23,7 +24,7 @@ const userSchema = new mongoose.Schema ({
  // THIS SHOULD NOT BE HERE, EVEN IN THE FORM OF COMMENT BUT STILL KEEPING THIS INORDER TO UNDERSTAND LATER
  //.ENV FILE IS USED TO KEEP THIS SECRET CODE SAFE
 // const secret = "This is our little secret string."
-userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ["password"]}); //TO encrypt only password not username.
+// userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ["password"]}); //TO encrypt only password not username.
 
 const User = new mongoose.model("User", userSchema);
 
@@ -42,7 +43,7 @@ app.get("/register", function(req, res) {
 app.post("/register", function(req, res) {
     const newUser = new User({
         email: req.body.username,
-        password: req.body.password
+        password: md5(req.body.password)
     })
 
     newUser.save()
@@ -57,7 +58,7 @@ app.post("/register", function(req, res) {
 //Validating the user with email and password whether registered or not.
 app.post("/login", function(req, res) {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
 
     User.findOne({email: username})
     .then((foundUser)=>{
