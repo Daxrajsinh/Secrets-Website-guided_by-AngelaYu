@@ -85,6 +85,36 @@ app.post("/login", function(req, res) {
     })
 });
 
+app.get("/submit", function(req, res) {
+    res.render("submit");
+})
+
+app.post("/submit", function(req, res) {
+    const submittedSecret = req.body.secret;
+    const userId = req.session.userId; // Assuming you have stored the user's ID in the session
+
+    User.findById(userId)
+        .then((foundUser) => {
+            if (foundUser) {
+                foundUser.secret = submittedSecret; // Assign the submitted secret to the user's 'secret' field
+                foundUser.save()
+                    .then(() => {
+                        res.redirect("/secrets"); // Redirect to the secrets page after successful submission
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        res.render("submit", { message: "An error occurred while submitting the secret" });
+                    });
+            } else {
+                res.render("submit", { message: "User not found" });
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+            res.render("submit", { message: "An error occurred while submitting the secret" });
+        });
+});
+
 
 app.get("/logout", function(req, res) {
     req.session.destroy(function(err) {
