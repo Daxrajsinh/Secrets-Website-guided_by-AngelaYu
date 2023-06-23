@@ -5,14 +5,21 @@ const ejs = require("ejs");
 const mongoose = require('mongoose');
 // const encrypt = require("mongoose-encryption");
 const md5 = require("md5");
+const session = require('express-session');
 
 const app = express();
 
-console.log(process.env.API_KEY);
+// console.log(process.env.API_KEY);
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'secret', // Use your own secret key or use a .env file
+    resave: false,
+    saveUninitialized: false
+}));
+
 
 mongoose.connect("mongodb://127.0.0.1:27017/userDB");
 
@@ -62,14 +69,32 @@ app.post("/login", function(req, res) {
 
     User.findOne({email: username})
     .then((foundUser)=>{
-        if(foundUser.password === password) {
-            res.render("secrets");
+        if(foundUser) {
+            if(foundUser.password === password) {
+                res.render("secrets");
+            } else {
+                res.render("login", { message: { field: 'password', text: 'Incorrect password' } });
+            }
+        } else {
+            res.render("login", { message: { field: 'email', text: 'User not found' } });
         }
     })
     .catch((err)=>{
         console.log(err);
+        res.render("login", { message: "An error occurred" });
     })
-})
+});
+
+
+app.get("/logout", function(req, res) {
+    req.session.destroy(function(err) {
+        if (err) {
+            console.log(err);
+        } else {
+            res.redirect("/"); // Redirect to the home page after logout
+        }
+    });
+});
 
 app.listen(3000, function() {
   console.log("Server started on port 3000");
